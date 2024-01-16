@@ -12,3 +12,7 @@ path = "lib/lib.rs"
 [[bin]]
 name = "monkey_exec"
 path = "src/main.rs"
+
+[[bin]]
+name = "monkey_repl"
+path = "repl/main.rs"
