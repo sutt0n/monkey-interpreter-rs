@@ -43,19 +43,23 @@ impl Lexer {
 
 
     fn next_token(&mut self) -> Token {
-        let mut tmp = [0; 4];
-
         self.skip_whitespace();
 
         let token = match self.ch {
-            '=' => Token::new(TokenEnum::ASSIGN, self.ch.encode_utf8(&mut tmp).to_string()),
-            ';' => Token::new(TokenEnum::SEMICOLON, self.ch.encode_utf8(&mut tmp).to_string()),
-            '(' => Token::new(TokenEnum::LPAREN, self.ch.encode_utf8(&mut tmp).to_string()),
-            ')' => Token::new(TokenEnum::RPAREN, self.ch.encode_utf8(&mut tmp).to_string()),
-            ',' => Token::new(TokenEnum::COMMA, self.ch.encode_utf8(&mut tmp).to_string()),
-            '+' => Token::new(TokenEnum::PLUS, self.ch.encode_utf8(&mut tmp).to_string()),
-            '{' => Token::new(TokenEnum::LBRACE, self.ch.encode_utf8(&mut tmp).to_string()),
-            '}' => Token::new(TokenEnum::RBRACE, self.ch.encode_utf8(&mut tmp).to_string()),
+            '=' => Token::new(TokenEnum::ASSIGN, self.ch.to_string()),
+            ';' => Token::new(TokenEnum::SEMICOLON, self.ch.to_string()),
+            '(' => Token::new(TokenEnum::LPAREN, self.ch.to_string()),
+            ')' => Token::new(TokenEnum::RPAREN, self.ch.to_string()),
+            ',' => Token::new(TokenEnum::COMMA, self.ch.to_string()),
+            '+' => Token::new(TokenEnum::PLUS, self.ch.to_string()),
+            '{' => Token::new(TokenEnum::LBRACE, self.ch.to_string()),
+            '}' => Token::new(TokenEnum::RBRACE, self.ch.to_string()),
+            '-' => Token::new(TokenEnum::MINUS, self.ch.to_string()),
+            '!' => Token::new(TokenEnum::BANG, self.ch.to_string()),
+            '*' => Token::new(TokenEnum::ASTERISK, self.ch.to_string()),
+            '/' => Token::new(TokenEnum::SLASH, self.ch.to_string()),
+            '<' => Token::new(TokenEnum::LT, self.ch.to_string()),
+            '>' => Token::new(TokenEnum::GT, self.ch.to_string()),
             '\0' => {
                 Token {
                     literal: "".to_string(),
@@ -187,6 +191,37 @@ mod tests {
             x + y;
         };
         let result = add(five, ten);".to_string());
+
+        for (_, token_type) in tests.iter().enumerate() {
+            let token = lex.next_token();
+
+            assert_eq!(token.token_type, token_type.token_type);
+            assert_eq!(token.literal, *token_type.literal);
+        }
+    }
+
+    #[test]
+    fn test_extended_operators() {
+        let tests: Vec<Token> = [
+            // !-/*5;
+            Token::new(TokenEnum::BANG, "!".to_string()),
+            Token::new(TokenEnum::MINUS, "-".to_string()),
+            Token::new(TokenEnum::SLASH, "/".to_string()),
+            Token::new(TokenEnum::ASTERISK, "*".to_string()),
+            Token::new(TokenEnum::INT(5), "5".to_string()),
+            Token::new(TokenEnum::SEMICOLON, ";".to_string()),
+            // 5 < 10 > 5;
+            Token::new(TokenEnum::INT(5), "5".to_string()),
+            Token::new(TokenEnum::LT, "<".to_string()),
+            Token::new(TokenEnum::INT(10), "10".to_string()),
+            Token::new(TokenEnum::GT, ">".to_string()),
+            Token::new(TokenEnum::INT(5), "5".to_string()),
+            Token::new(TokenEnum::SEMICOLON, ";".to_string()),
+        ].to_vec();
+
+        let mut lex = Lexer::new(r"
+        !-/*5;
+        5 < 10 > 5;".to_string());
 
         for (_, token_type) in tests.iter().enumerate() {
             let token = lex.next_token();
