@@ -47,12 +47,22 @@ pub enum TokenEnum {
     // keywords
     FUNCTION,
     LET,
+    TRUE,
+    FALSE,
+    IF,
+    ELSE,
+    RETURN,
 }
 
 pub fn lookup_ident(ident: &str) -> TokenType {
     match ident {
         "fn" => TokenEnum::FUNCTION,
         "let" => TokenEnum::LET,
+        "true" => TokenEnum::TRUE,
+        "false" => TokenEnum::FALSE,
+        "if" => TokenEnum::IF,
+        "else" => TokenEnum::ELSE,
+        "return" => TokenEnum::RETURN,
         _ => TokenEnum::IDENT(ident.to_string()),
     }
 }

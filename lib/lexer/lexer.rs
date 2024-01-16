@@ -217,11 +217,39 @@ mod tests {
             Token::new(TokenEnum::GT, ">".to_string()),
             Token::new(TokenEnum::INT(5), "5".to_string()),
             Token::new(TokenEnum::SEMICOLON, ";".to_string()),
+            // if (5 < 10) {
+            Token::new(TokenEnum::IF, "if".to_string()),
+            Token::new(TokenEnum::LPAREN, "(".to_string()),
+            Token::new(TokenEnum::INT(5), "5".to_string()),
+            Token::new(TokenEnum::LT, "<".to_string()),
+            Token::new(TokenEnum::INT(10), "10".to_string()),
+            Token::new(TokenEnum::RPAREN, ")".to_string()),
+            Token::new(TokenEnum::LBRACE, "{".to_string()),
+            // return true;
+            Token::new(TokenEnum::RETURN, "return".to_string()),
+            Token::new(TokenEnum::TRUE, "true".to_string()),
+            Token::new(TokenEnum::SEMICOLON, ";".to_string()),
+            // } else {
+            Token::new(TokenEnum::RBRACE, "}".to_string()),
+            Token::new(TokenEnum::ELSE, "else".to_string()),
+            Token::new(TokenEnum::LBRACE, "{".to_string()),
+            // return false;
+            Token::new(TokenEnum::RETURN, "return".to_string()),
+            Token::new(TokenEnum::FALSE, "false".to_string()),
+            Token::new(TokenEnum::SEMICOLON, ";".to_string()),
+            // }
+            Token::new(TokenEnum::RBRACE, "}".to_string()),
         ].to_vec();
 
         let mut lex = Lexer::new(r"
         !-/*5;
-        5 < 10 > 5;".to_string());
+        5 < 10 > 5;
+
+        if (5 < 10) {
+            return true;
+        } else {
+            return false;
+        }".to_string());
 
         for (_, token_type) in tests.iter().enumerate() {
             let token = lex.next_token();
@@ -229,6 +257,5 @@ mod tests {
             assert_eq!(token.token_type, token_type.token_type);
             assert_eq!(token.literal, *token_type.literal);
         }
-
     }
 }
