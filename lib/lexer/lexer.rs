@@ -1,4 +1,4 @@
-use crate::token::token::{Token, TokenEnum, lookup_ident};
+use crate::token::{token::{Token, TokenEnum, lookup_ident}, char_to_str};
 
 #[derive(Clone, Debug)]
 pub struct Lexer {
@@ -51,34 +51,34 @@ impl Lexer {
                     self.read_char();
                     let literal = format!("{}{}", ch.to_string(), self.ch.to_string());
 
-                    Token::new(TokenEnum::EQ, literal)
+                    Token::new(TokenEnum::EQ, literal.as_str())
                 } else {
-                    Token::new(TokenEnum::ASSIGN, self.ch.to_string())
+                    Token::new(TokenEnum::ASSIGN, char_to_str(self.ch))
                 }
             },
-            ';' => Token::new(TokenEnum::SEMICOLON, self.ch.to_string()),
-            '(' => Token::new(TokenEnum::LPAREN, self.ch.to_string()),
-            ')' => Token::new(TokenEnum::RPAREN, self.ch.to_string()),
-            ',' => Token::new(TokenEnum::COMMA, self.ch.to_string()),
-            '+' => Token::new(TokenEnum::PLUS, self.ch.to_string()),
-            '{' => Token::new(TokenEnum::LBRACE, self.ch.to_string()),
-            '}' => Token::new(TokenEnum::RBRACE, self.ch.to_string()),
-            '-' => Token::new(TokenEnum::MINUS, self.ch.to_string()),
+            ';' => Token::new(TokenEnum::SEMICOLON, char_to_str(self.ch)),
+            '(' => Token::new(TokenEnum::LPAREN, char_to_str(self.ch)),
+            ')' => Token::new(TokenEnum::RPAREN, char_to_str(self.ch)),
+            ',' => Token::new(TokenEnum::COMMA, char_to_str(self.ch)),
+            '+' => Token::new(TokenEnum::PLUS, char_to_str(self.ch)),
+            '{' => Token::new(TokenEnum::LBRACE, char_to_str(self.ch)),
+            '}' => Token::new(TokenEnum::RBRACE, char_to_str(self.ch)),
+            '-' => Token::new(TokenEnum::MINUS, char_to_str(self.ch)),
             '!' => {
                 if self.peek_char() == '=' {
                     let ch = self.ch;
                     self.read_char();
                     let literal = format!("{}{}", ch.to_string(), self.ch.to_string());
 
-                    Token::new(TokenEnum::NEQ, literal)
+                    Token::new(TokenEnum::NEQ, literal.as_str())
                 } else {
-                    Token::new(TokenEnum::BANG, self.ch.to_string())
+                    Token::new(TokenEnum::BANG, &self.ch.to_string())
                 }
             },
-            '*' => Token::new(TokenEnum::ASTERISK, self.ch.to_string()),
-            '/' => Token::new(TokenEnum::SLASH, self.ch.to_string()),
-            '<' => Token::new(TokenEnum::LT, self.ch.to_string()),
-            '>' => Token::new(TokenEnum::GT, self.ch.to_string()),
+            '*' => Token::new(TokenEnum::ASTERISK, char_to_str(self.ch)),
+            '/' => Token::new(TokenEnum::SLASH, char_to_str(self.ch)),
+            '<' => Token::new(TokenEnum::LT, char_to_str(self.ch)),
+            '>' => Token::new(TokenEnum::GT, char_to_str(self.ch)),
             '\0' => {
                 Token {
                     literal: "".to_string(),
@@ -89,12 +89,12 @@ impl Lexer {
             _ => {
                 if self.ch.is_alphabetic() {
                     let literal = self.read_identifier();
-                    return Token::new(lookup_ident(&literal), literal.to_string())
+                    return Token::new(lookup_ident(&literal), literal.as_str())
                 } else if self.ch.is_digit(10) {
                     let int = self.read_int();
-                    return Token::new(TokenEnum::INT(int), int.to_string())
+                    return Token::new(TokenEnum::INT(int), &int.to_string())
                 } else {
-                    return Token::new(TokenEnum::ILLEGAL, self.ch.to_string())
+                    return Token::new(TokenEnum::ILLEGAL, &self.ch.to_string())
                 }
             },
         };
@@ -147,14 +147,14 @@ mod tests {
     #[test]
     fn test_next_token() {
         let tests: Vec<Token> = [
-            Token::new(TokenEnum::ASSIGN, '='.to_string()),
-            Token::new(TokenEnum::PLUS, '+'.to_string()),
-            Token::new(TokenEnum::LPAREN, '('.to_string()),
-            Token::new(TokenEnum::RPAREN, ')'.to_string()),
-            Token::new(TokenEnum::LBRACE, '{'.to_string()),
-            Token::new(TokenEnum::RBRACE, '}'.to_string()),
-            Token::new(TokenEnum::COMMA, ','.to_string()),
-            Token::new(TokenEnum::SEMICOLON, ';'.to_string()),
+            Token::new(TokenEnum::ASSIGN, "="),
+            Token::new(TokenEnum::PLUS, "+"),
+            Token::new(TokenEnum::LPAREN, "("),
+            Token::new(TokenEnum::RPAREN, ")"),
+            Token::new(TokenEnum::LBRACE, "{"),
+            Token::new(TokenEnum::RBRACE, "}"),
+            Token::new(TokenEnum::COMMA, ","),
+            Token::new(TokenEnum::SEMICOLON, ";"),
         ].to_vec();
 
         let mut lex = Lexer::new("=+(){},;".to_string());
@@ -171,46 +171,46 @@ mod tests {
     fn test_next_token_extra() {
         let tests: Vec<Token> = [
             // let five = 5;
-            Token::new(TokenEnum::LET, "let".to_string()),
-            Token::new(TokenEnum::IDENT("five".to_string()), "five".to_string()),
-            Token::new(TokenEnum::ASSIGN, '='.to_string()),
-            Token::new(TokenEnum::INT(5), "5".to_string()),
-            Token::new(TokenEnum::SEMICOLON, ';'.to_string()),
+            Token::new(TokenEnum::LET, "let"),
+            Token::new(TokenEnum::IDENT("five".to_string()), "five"),
+            Token::new(TokenEnum::ASSIGN, "="),
+            Token::new(TokenEnum::INT(5), "5"),
+            Token::new(TokenEnum::SEMICOLON, ";"),
             // let ten = 10;
-            Token::new(TokenEnum::LET, "let".to_string()),
-            Token::new(TokenEnum::IDENT("ten".to_string()), "ten".to_string()),
-            Token::new(TokenEnum::ASSIGN, '='.to_string()),
-            Token::new(TokenEnum::INT(10), "10".to_string()),
-            Token::new(TokenEnum::SEMICOLON, ';'.to_string()),
+            Token::new(TokenEnum::LET, "let"),
+            Token::new(TokenEnum::IDENT("ten".to_string()), "ten"),
+            Token::new(TokenEnum::ASSIGN, "="),
+            Token::new(TokenEnum::INT(10), "10"),
+            Token::new(TokenEnum::SEMICOLON, ";"),
             // let add = fn(x, y) { x + y; };
-            Token::new(TokenEnum::LET, "let".to_string()),
-            Token::new(TokenEnum::IDENT("add".to_string()), "add".to_string()),
-            Token::new(TokenEnum::ASSIGN, '='.to_string()),
-            Token::new(TokenEnum::FUNCTION, "fn".to_string()),
-            Token::new(TokenEnum::LPAREN, '('.to_string()),
-            Token::new(TokenEnum::IDENT("x".to_string()), "x".to_string()),
-            Token::new(TokenEnum::COMMA, ','.to_string()),
-            Token::new(TokenEnum::IDENT("y".to_string()), "y".to_string()),
-            Token::new(TokenEnum::RPAREN, ')'.to_string()),
-            Token::new(TokenEnum::LBRACE, '{'.to_string()),
-            Token::new(TokenEnum::IDENT("x".to_string()), "x".to_string()),
-            Token::new(TokenEnum::PLUS, '+'.to_string()),
-            Token::new(TokenEnum::IDENT("y".to_string()), "y".to_string()),
-            Token::new(TokenEnum::SEMICOLON, ';'.to_string()),
-            Token::new(TokenEnum::RBRACE, '}'.to_string()),
-            Token::new(TokenEnum::SEMICOLON, ';'.to_string()),
+            Token::new(TokenEnum::LET, "let"),
+            Token::new(TokenEnum::IDENT("add".to_string()), "add"),
+            Token::new(TokenEnum::ASSIGN, "="),
+            Token::new(TokenEnum::FUNCTION, "fn"),
+            Token::new(TokenEnum::LPAREN, "("),
+            Token::new(TokenEnum::IDENT("x".to_string()), "x"),
+            Token::new(TokenEnum::COMMA, ","),
+            Token::new(TokenEnum::IDENT("y".to_string()), "y"),
+            Token::new(TokenEnum::RPAREN, ")"),
+            Token::new(TokenEnum::LBRACE, "{"),
+            Token::new(TokenEnum::IDENT("x".to_string()), "x"),
+            Token::new(TokenEnum::PLUS, "+"),
+            Token::new(TokenEnum::IDENT("y".to_string()), "y"),
+            Token::new(TokenEnum::SEMICOLON, ";"),
+            Token::new(TokenEnum::RBRACE, "}"),
+            Token::new(TokenEnum::SEMICOLON, ";"),
             // let result = add(five, ten);
-            Token::new(TokenEnum::LET, "let".to_string()),
-            Token::new(TokenEnum::IDENT("result".to_string()), "result".to_string()),
-            Token::new(TokenEnum::ASSIGN, '='.to_string()),
-            Token::new(TokenEnum::IDENT("add".to_string()), "add".to_string()),
-            Token::new(TokenEnum::LPAREN, '('.to_string()),
-            Token::new(TokenEnum::IDENT("five".to_string()), "five".to_string()),
-            Token::new(TokenEnum::COMMA, ','.to_string()),
-            Token::new(TokenEnum::IDENT("ten".to_string()), "ten".to_string()),
-            Token::new(TokenEnum::RPAREN, ')'.to_string()),
-            Token::new(TokenEnum::SEMICOLON, ';'.to_string()),
-            Token::new(TokenEnum::EOF, "".to_string()),
+            Token::new(TokenEnum::LET, "let"),
+            Token::new(TokenEnum::IDENT("result".to_string()), "result"),
+            Token::new(TokenEnum::ASSIGN, "="),
+            Token::new(TokenEnum::IDENT("add".to_string()), "add"),
+            Token::new(TokenEnum::LPAREN, "("),
+            Token::new(TokenEnum::IDENT("five".to_string()), "five"),
+            Token::new(TokenEnum::COMMA, ","),
+            Token::new(TokenEnum::IDENT("ten".to_string()), "ten"),
+            Token::new(TokenEnum::RPAREN, ")"),
+            Token::new(TokenEnum::SEMICOLON, ";"),
+            Token::new(TokenEnum::EOF, ""),
         ].to_vec();
 
         let mut lex = Lexer::new(r"
@@ -233,51 +233,51 @@ mod tests {
     fn test_extended_operators() {
         let tests: Vec<Token> = [
             // !-/*5;
-            Token::new(TokenEnum::BANG, "!".to_string()),
-            Token::new(TokenEnum::MINUS, "-".to_string()),
-            Token::new(TokenEnum::SLASH, "/".to_string()),
-            Token::new(TokenEnum::ASTERISK, "*".to_string()),
-            Token::new(TokenEnum::INT(5), "5".to_string()),
-            Token::new(TokenEnum::SEMICOLON, ";".to_string()),
+            Token::new(TokenEnum::BANG, "!"),
+            Token::new(TokenEnum::MINUS, "-"),
+            Token::new(TokenEnum::SLASH, "/"),
+            Token::new(TokenEnum::ASTERISK, "*"),
+            Token::new(TokenEnum::INT(5), "5"),
+            Token::new(TokenEnum::SEMICOLON, ";"),
             // 5 < 10 > 5;
-            Token::new(TokenEnum::INT(5), "5".to_string()),
-            Token::new(TokenEnum::LT, "<".to_string()),
-            Token::new(TokenEnum::INT(10), "10".to_string()),
-            Token::new(TokenEnum::GT, ">".to_string()),
-            Token::new(TokenEnum::INT(5), "5".to_string()),
-            Token::new(TokenEnum::SEMICOLON, ";".to_string()),
+            Token::new(TokenEnum::INT(5), "5"),
+            Token::new(TokenEnum::LT, "<"),
+            Token::new(TokenEnum::INT(10), "10"),
+            Token::new(TokenEnum::GT, ">"),
+            Token::new(TokenEnum::INT(5), "5"),
+            Token::new(TokenEnum::SEMICOLON, ";"),
             // if (5 < 10) {
-            Token::new(TokenEnum::IF, "if".to_string()),
-            Token::new(TokenEnum::LPAREN, "(".to_string()),
-            Token::new(TokenEnum::INT(5), "5".to_string()),
-            Token::new(TokenEnum::LT, "<".to_string()),
-            Token::new(TokenEnum::INT(10), "10".to_string()),
-            Token::new(TokenEnum::RPAREN, ")".to_string()),
-            Token::new(TokenEnum::LBRACE, "{".to_string()),
+            Token::new(TokenEnum::IF, "if"),
+            Token::new(TokenEnum::LPAREN, "("),
+            Token::new(TokenEnum::INT(5), "5"),
+            Token::new(TokenEnum::LT, "<"),
+            Token::new(TokenEnum::INT(10), "10"),
+            Token::new(TokenEnum::RPAREN, ")"),
+            Token::new(TokenEnum::LBRACE, "{"),
             // return true;
-            Token::new(TokenEnum::RETURN, "return".to_string()),
-            Token::new(TokenEnum::TRUE, "true".to_string()),
-            Token::new(TokenEnum::SEMICOLON, ";".to_string()),
+            Token::new(TokenEnum::RETURN, "return"),
+            Token::new(TokenEnum::TRUE, "true"),
+            Token::new(TokenEnum::SEMICOLON, ";"),
             // } else {
-            Token::new(TokenEnum::RBRACE, "}".to_string()),
-            Token::new(TokenEnum::ELSE, "else".to_string()),
-            Token::new(TokenEnum::LBRACE, "{".to_string()),
+            Token::new(TokenEnum::RBRACE, "}"),
+            Token::new(TokenEnum::ELSE, "else"),
+            Token::new(TokenEnum::LBRACE, "{"),
             // return false;
-            Token::new(TokenEnum::RETURN, "return".to_string()),
-            Token::new(TokenEnum::FALSE, "false".to_string()),
-            Token::new(TokenEnum::SEMICOLON, ";".to_string()),
+            Token::new(TokenEnum::RETURN, "return"),
+            Token::new(TokenEnum::FALSE, "false"),
+            Token::new(TokenEnum::SEMICOLON, ";"),
             // }
-            Token::new(TokenEnum::RBRACE, "}".to_string()),
+            Token::new(TokenEnum::RBRACE, "}"),
             // 10 == 10;
-            Token::new(TokenEnum::INT(10), "10".to_string()),
-            Token::new(TokenEnum::EQ, "==".to_string()),
-            Token::new(TokenEnum::INT(10), "10".to_string()),
-            Token::new(TokenEnum::SEMICOLON, ";".to_string()),
+            Token::new(TokenEnum::INT(10), "10"),
+            Token::new(TokenEnum::EQ, "=="),
+            Token::new(TokenEnum::INT(10), "10"),
+            Token::new(TokenEnum::SEMICOLON, ";"),
             // 10 != 9;
-            Token::new(TokenEnum::INT(10), "10".to_string()),
-            Token::new(TokenEnum::NEQ, "!=".to_string()),
-            Token::new(TokenEnum::INT(9), "9".to_string()),
-            Token::new(TokenEnum::SEMICOLON, ";".to_string()),
+            Token::new(TokenEnum::INT(10), "10"),
+            Token::new(TokenEnum::NEQ, "!="),
+            Token::new(TokenEnum::INT(9), "9"),
+            Token::new(TokenEnum::SEMICOLON, ";"),
         ].to_vec();
 
         let mut lex = Lexer::new(r"
