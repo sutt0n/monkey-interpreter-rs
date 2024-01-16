@@ -17,21 +17,20 @@ impl Lexer {
             ch: 0 as char
         };
 
-        println!("lexer before: {:?}", lexer);
         let lex = lexer.read_char();
-        println!("lexer after: {:?}", lex);
-        lex.to_owned() 
+        lex.clone()
     }
 
     fn read_char(&mut self) -> &mut Lexer {
         let mut this = self;
-        if this.read_position >= this.input.len() as u32 {
-            this.ch = 0 as char;
+        let read_pos = usize::try_from(this.read_position).unwrap();
+        if read_pos >= this.input.len() {
+            this.ch = '\0';
         } else {
-            this.ch = this.input.as_bytes()[this.read_position as usize] as char;
+            this.ch = this.input.as_bytes()[read_pos] as char;
         }
         this.position = this.read_position;
-        this.read_position += 1;
+        this.read_position = this.read_position + 1;
         this
     }
 
@@ -46,7 +45,17 @@ impl Lexer {
         self.skip_whitespace();
 
         let token = match self.ch {
-            '=' => Token::new(TokenEnum::ASSIGN, self.ch.to_string()),
+            '=' => {
+                if self.peek_char() == '=' {
+                    let ch = self.ch;
+                    self.read_char();
+                    let literal = format!("{}{}", ch.to_string(), self.ch.to_string());
+
+                    Token::new(TokenEnum::EQ, literal)
+                } else {
+                    Token::new(TokenEnum::ASSIGN, self.ch.to_string())
+                }
+            },
             ';' => Token::new(TokenEnum::SEMICOLON, self.ch.to_string()),
             '(' => Token::new(TokenEnum::LPAREN, self.ch.to_string()),
             ')' => Token::new(TokenEnum::RPAREN, self.ch.to_string()),
@@ -55,7 +64,17 @@ impl Lexer {
             '{' => Token::new(TokenEnum::LBRACE, self.ch.to_string()),
             '}' => Token::new(TokenEnum::RBRACE, self.ch.to_string()),
             '-' => Token::new(TokenEnum::MINUS, self.ch.to_string()),
-            '!' => Token::new(TokenEnum::BANG, self.ch.to_string()),
+            '!' => {
+                if self.peek_char() == '=' {
+                    let ch = self.ch;
+                    self.read_char();
+                    let literal = format!("{}{}", ch.to_string(), self.ch.to_string());
+
+                    Token::new(TokenEnum::NEQ, literal)
+                } else {
+                    Token::new(TokenEnum::BANG, self.ch.to_string())
+                }
+            },
             '*' => Token::new(TokenEnum::ASTERISK, self.ch.to_string()),
             '/' => Token::new(TokenEnum::SLASH, self.ch.to_string()),
             '<' => Token::new(TokenEnum::LT, self.ch.to_string()),
@@ -70,11 +89,9 @@ impl Lexer {
             _ => {
                 if self.ch.is_alphabetic() {
                     let literal = self.read_identifier();
-                    println!("identifier {:?}", literal);
                     return Token::new(lookup_ident(&literal), literal.to_string())
                 } else if self.ch.is_digit(10) {
                     let int = self.read_int();
-                    println!("integer {:?}", int);
                     return Token::new(TokenEnum::INT(int), int.to_string())
                 } else {
                     return Token::new(TokenEnum::ILLEGAL, self.ch.to_string())
@@ -108,6 +125,18 @@ impl Lexer {
         let input_slice = self.input.get(pos as usize..self.position as usize).unwrap();
 
         input_slice.to_string()
+    }
+
+    fn peek_char(&mut self) -> char {
+        let read_pos = usize::try_from(self.read_position).unwrap();
+
+        println!("read_pos {}, {}", read_pos, self.input.as_bytes()[read_pos] as char);
+
+        if read_pos >= self.input.len() {
+            '\0'
+        } else {
+            self.input.as_bytes()[read_pos as usize] as char
+        }
     }
 }
 
@@ -239,6 +268,16 @@ mod tests {
             Token::new(TokenEnum::SEMICOLON, ";".to_string()),
             // }
             Token::new(TokenEnum::RBRACE, "}".to_string()),
+            // 10 == 10;
+            Token::new(TokenEnum::INT(10), "10".to_string()),
+            Token::new(TokenEnum::EQ, "==".to_string()),
+            Token::new(TokenEnum::INT(10), "10".to_string()),
+            Token::new(TokenEnum::SEMICOLON, ";".to_string()),
+            // 10 != 9;
+            Token::new(TokenEnum::INT(10), "10".to_string()),
+            Token::new(TokenEnum::NEQ, "!=".to_string()),
+            Token::new(TokenEnum::INT(9), "9".to_string()),
+            Token::new(TokenEnum::SEMICOLON, ";".to_string()),
         ].to_vec();
 
         let mut lex = Lexer::new(r"
@@ -249,7 +288,10 @@ mod tests {
             return true;
         } else {
             return false;
-        }".to_string());
+        }
+
+        10 == 10;
+        10 != 9;".to_string());
 
         for (_, token_type) in tests.iter().enumerate() {
             let token = lex.next_token();

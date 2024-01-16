@@ -35,6 +35,9 @@ pub enum TokenEnum {
     LT,
     GT,
 
+    EQ,
+    NEQ,
+
     // delimeters
     COMMA,
     SEMICOLON,
