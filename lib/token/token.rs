@@ -3,16 +3,13 @@ pub type TokenType = TokenEnum;
 #[derive(Clone, Debug)]
 pub struct Token {
     pub token_type: TokenType,
-    pub literal: String,
+    pub range: TokenRange,
 }
 
-impl Token {
-    pub fn new(token_type: TokenType, literal: &str) -> Token {
-        Token { 
-            token_type, 
-            literal: literal.to_string(),
-        }
-    }
+#[derive(Clone, Debug)]
+pub struct TokenRange {
+    pub start: usize,
+    pub end: usize,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -21,7 +18,7 @@ pub enum TokenEnum {
     EOF,
 
     // identifiers + literals
-    IDENT(String), // add, foobar, x, y, ...
+    IDENT { name: String }, // add, foobar, x, y, ...
     INT(u32), // 123456
 
     // operators
@@ -66,6 +63,6 @@ pub fn lookup_ident(ident: &str) -> TokenType {
         "if" => TokenEnum::IF,
         "else" => TokenEnum::ELSE,
         "return" => TokenEnum::RETURN,
-        _ => TokenEnum::IDENT(ident.to_string()),
+        _ => TokenEnum::IDENT { name: ident.to_string() },
     }
 }

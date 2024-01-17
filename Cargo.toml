@@ -16,3 +16,6 @@ path = "src/main.rs"
 [[bin]]
 name = "monkey_repl"
 path = "repl/main.rs"
+
+[profile.test]
+opt-level = 2

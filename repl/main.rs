@@ -1,4 +1,4 @@
-use std::io::{stdin, stdout, Write};
+use std::io::{stdin, Write};
 
 use monkey_lib::lexer::lexer::Lexer;
 use monkey_lib::token::token::TokenEnum;
@@ -14,7 +14,7 @@ pub fn main() {
         let mut buffer = String::new();
         let mut lexer = match stdin().read_line(&mut buffer) {
             Ok(_bytes) => {
-                let lex = Lexer::new(buffer);
+                let lex = Lexer::new(&buffer);
                 lex
             },
             Err(error) => panic!("Error: {}", error)
