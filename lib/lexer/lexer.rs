@@ -22,7 +22,6 @@ impl<'a> Lexer<'a> {
     }
 
     fn read_char(&mut self) {
-        println!("read_char: {}", self.read_position);
         if self.read_position >= self.input.len() {
             self.ch = 0 as char;
         } else {

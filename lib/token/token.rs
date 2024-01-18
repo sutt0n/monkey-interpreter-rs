@@ -1,3 +1,5 @@
+use core::fmt;
+
 pub type TokenType = TokenEnum;
 
 #[derive(Clone, Debug)]
@@ -52,6 +54,40 @@ pub enum TokenEnum {
     IF,
     ELSE,
     RETURN,
+}
+
+impl fmt::Display for TokenEnum {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TokenEnum::ILLEGAL => write!(f, "ILLEGAL"),
+            TokenEnum::EOF => write!(f, "EOF"),
+            TokenEnum::IDENT { name } => write!(f, "{}", name),
+            TokenEnum::INT(int) => write!(f, "{}", int),
+            TokenEnum::ASSIGN => write!(f, "="),
+            TokenEnum::PLUS => write!(f, "+"),
+            TokenEnum::MINUS => write!(f, "-"),
+            TokenEnum::BANG => write!(f, "!"),
+            TokenEnum::ASTERISK => write!(f, "*"),
+            TokenEnum::SLASH => write!(f, "/"),
+            TokenEnum::LT => write!(f, "<"),
+            TokenEnum::GT => write!(f, ">"),
+            TokenEnum::EQ => write!(f, "=="),
+            TokenEnum::NEQ => write!(f, "!="),
+            TokenEnum::COMMA => write!(f, ","),
+            TokenEnum::SEMICOLON => write!(f, ";"),
+            TokenEnum::LPAREN => write!(f, "("),
+            TokenEnum::RPAREN => write!(f, ")"),
+            TokenEnum::LBRACE => write!(f, "{{"),
+            TokenEnum::RBRACE => write!(f, "}}"),
+            TokenEnum::FUNCTION => write!(f, "fn"),
+            TokenEnum::LET => write!(f, "let"),
+            TokenEnum::TRUE => write!(f, "true"),
+            TokenEnum::FALSE => write!(f, "false"),
+            TokenEnum::IF => write!(f, "if"),
+            TokenEnum::ELSE => write!(f, "else"),
+            TokenEnum::RETURN => write!(f, "return"),
+        }
+    }
 }
 
 pub fn lookup_ident(ident: &str) -> TokenType {
