@@ -8,7 +8,7 @@ pub struct Token {
     pub range: TokenRange,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct TokenRange {
     pub start: usize,
     pub end: usize,

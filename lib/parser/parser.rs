@@ -1,6 +1,6 @@
 use crate::{lexer::lexer::Lexer, token::token::{Token, TokenEnum, TokenRange}};
 
-use super::ast::{Program, Statement, LetStatement, Expression, Identifier};
+use super::ast::{Program, Statement, LetStatement, Literal, Expression, Identifier, ReturnStatement};
 
 type ParsingError = String;
 type ParsingErrors = Vec<ParsingError>;
@@ -46,7 +46,12 @@ impl<'a> Parser<'a> {
             self.next_token();
             true
         } else {
-            self.errors.push(format!("expected next token to be {:?}, got {:?} instead", *token_type, self.peek_token.token_type));
+            let msg = format!(
+                "expected next token to be {:?}, got {:?} instead.", 
+                (*token_type).to_string(), 
+                self.peek_token.token_type.to_string()
+            );
+            self.errors.push(msg);
             false
         }
     }
@@ -56,7 +61,6 @@ impl<'a> Parser<'a> {
 
         while self.current_token.token_type != TokenEnum::EOF {
             if let Some(statement) = self.parse_statement() {
-                println!("statement: {:?}", statement);
                 statements.push(statement);
             } else {
                 println!("didn't get the statement");
@@ -72,8 +76,38 @@ impl<'a> Parser<'a> {
     pub fn parse_statement(&mut self) -> Option<Statement> {
         match &self.current_token.token_type {
             TokenEnum::LET => self.parse_let_statement(),
+            TokenEnum::RETURN => self.parse_return_statement(),
             _ => None,
         }
+    }
+
+    pub fn parse_return_statement(&mut self) -> Option<Statement> {
+        let token = self.current_token.clone();
+        let start = token.range.start;
+
+        self.next_token();
+
+        let name = &self.current_token.token_type.to_string();
+
+        while !self.current_token_is(TokenEnum::SEMICOLON) {
+            self.next_token();
+        }
+
+        let end = self.current_token.range.end;
+
+        let expression = Expression::Literal(Literal {
+            value: name.to_string(),
+            range: TokenRange {
+                start,
+                end,
+            }
+        });
+
+        let statement = Statement::ReturnStatement(ReturnStatement {
+            expression,
+        });
+
+        Some(statement)
     }
 
     pub fn parse_let_statement(&mut self) -> Option<Statement> {
@@ -88,7 +122,7 @@ impl<'a> Parser<'a> {
                 identifier = name.to_string()
             },
             _ => {
-                self.errors.push(format!("expected next token to be IDENT, got {:?} instead", self.current_token.token_type));
+                self.errors.push(format!("expected next token to be IDENT, got {:?} instead.", self.current_token.token_type.to_string()));
                 return None;
             },
         }
@@ -100,10 +134,7 @@ impl<'a> Parser<'a> {
             }
         );
 
-        if !self.expect_peek(&TokenEnum::ASSIGN) {
-            println!("second expect_peek failed");
-            return None;
-        }
+        self.expect_peek(&TokenEnum::ASSIGN);
 
         while !self.current_token_is(TokenEnum::SEMICOLON) {
             self.next_token();
@@ -139,12 +170,11 @@ mod test {
         let mut parser = Parser::new(lexer);
         let program = parser.parse_program();
 
-        println!("program.statements {:?}", program.statements);
         assert_eq!(program.statements.len(), 3);
     }
 
     #[test]
-    fn test_parse_errors() {
+    fn test_let_parse_errors() {
         let lexer = Lexer::new("
             let x 5;
             let = 10;
@@ -152,9 +182,23 @@ mod test {
         ");
 
         let mut parser = Parser::new(lexer);
+        let _ = parser.parse_program();
+
+        assert_eq!(parser.errors.len(), 3);
+    }
+
+    #[test]
+    fn test_return_statement() {
+        let lexer = Lexer::new("
+            return 5;
+            return 10;
+            return 993322;
+        ");
+
+        let mut parser = Parser::new(lexer);
         let program = parser.parse_program();
 
-        assert_eq!(program.statements.len(), 2);
-        println!("parser.errors {:?}", parser.errors);
+        println!("statements {:?}", program.statements);
+        assert_eq!(program.statements.len(), 3);
     }
 }
