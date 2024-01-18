@@ -1,6 +1,5 @@
 use crate::{token::token::{Token, TokenRange}, lexer::lexer::Lexer};
 
-
 pub enum Node {
     Statement(Statement),
     Expression(Expression),
