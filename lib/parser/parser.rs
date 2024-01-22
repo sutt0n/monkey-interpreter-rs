@@ -1,6 +1,6 @@
 use crate::{lexer::lexer::Lexer, token::token::{Token, TokenEnum, TokenRange}};
 
-use super::ast::{Program, Statement, LetStatement, Literal, Expression, Identifier, ReturnStatement};
+use super::ast::{Program, Statement, LetStatement, Literal, Expression, Identifier, ReturnStatement, Precedence, Integer, get_precedence, Infix};
 
 type ParsingError = String;
 type ParsingErrors = Vec<ParsingError>;
@@ -77,37 +77,119 @@ impl<'a> Parser<'a> {
         match &self.current_token.token_type {
             TokenEnum::LET => self.parse_let_statement(),
             TokenEnum::RETURN => self.parse_return_statement(),
-            _ => None,
+            _ => {
+                println!("missing token type {:?}", self.current_token.token_type);
+                None
+            },
         }
     }
 
-    pub fn parse_return_statement(&mut self) -> Option<Statement> {
-        let token = self.current_token.clone();
-        let start = token.range.start;
+    pub fn parse_expression_statement(&mut self) -> Option<Statement> {
+        let (expression, _) = self.parse_expression(Precedence::LOWEST)?;
 
-        self.next_token();
-
-        let name = &self.current_token.token_type.to_string();
-
-        while !self.current_token_is(TokenEnum::SEMICOLON) {
+        if self.peek_token_is(&TokenEnum::SEMICOLON) {
             self.next_token();
+        }
+
+        Some(Statement::Expression(expression))
+    }
+
+    pub fn parse_expression(&mut self, precedence: Precedence) -> Option<(Expression, TokenRange)> {
+        let mut left_start = self.current_token.range.start.clone();
+        let mut left = self.parse_prefix_expression()?;
+
+        while self.peek_token_is(&TokenEnum::SEMICOLON) && precedence < get_precedence(&self.peek_token.token_type) {
+            match self.parse_infix_expression(&left, left_start) {
+                Some(infix) => {
+                    left = infix;
+                    if let Expression::Infix(infix_expr) = left.clone() {
+                        left_start = infix_expr.range.start;
+                    }
+                },
+                None => {
+                    return Some((
+                        left,
+                        TokenRange {
+                            start: left_start,
+                            end: self.current_token.range.end
+                        }
+                    ))
+                }
+            }
         }
 
         let end = self.current_token.range.end;
 
-        let expression = Expression::Literal(Literal {
-            value: name.to_string(),
-            range: TokenRange {
-                start,
+        Some((
+            left,
+            TokenRange {
+                start: left_start,
                 end,
             }
-        });
+        ))
+    }
 
-        let statement = Statement::ReturnStatement(ReturnStatement {
-            expression,
-        });
+    pub fn parse_infix_expression(&mut self, expression: &Expression, from: usize) -> Option<Expression> {
+        match self.peek_token.token_type {
+            TokenEnum::PLUS
+            | TokenEnum::MINUS
+            | TokenEnum::ASTERISK
+            | TokenEnum::SLASH
+            | TokenEnum::EQ
+            | TokenEnum::NEQ
+            | TokenEnum::LT
+            | TokenEnum::GT => {
+                self.next_token();
+                let infix_op = self.current_token.clone();
+                let precedence_value = get_precedence(&self.current_token.token_type);
+                self.next_token();
+                let (right, span) = self.parse_expression(precedence_value).unwrap();
+                return Some(Expression::Infix(Infix {
+                    token: infix_op,
+                    left: Box::new(expression.clone()),
+                    right: Box::new(right),
+                    range: TokenRange { start: from, end: span.end },
+                }));
+            }
+            _ => None,
+        }
+    }
 
-        Some(statement)
+    pub fn parse_prefix_expression(&mut self) -> Option<Expression> {
+        match &self.current_token.token_type {
+            TokenEnum::IDENT { name } => {
+                return Some(Expression::Identifier(Identifier {
+                    name: name.clone(),
+                    range: self.current_token.clone().range,
+                }))
+            }
+            TokenEnum::INT(i) => {
+                return Some(Expression::Literal(Literal::Integer(Integer {
+                    value: *i,
+                    range: self.current_token.clone().range,
+                })))
+            }
+            _ => {
+                None
+            }
+        }
+    }
+
+    pub fn parse_return_statement(&mut self) -> Option<Statement> {
+        let start = self.current_token.range.start;
+        self.next_token();
+
+        let value = self.parse_expression(Precedence::LOWEST)?.0;
+
+        if self.peek_token_is(&TokenEnum::SEMICOLON) {
+            self.next_token();
+        }
+        let end = self.current_token.range.end;
+
+        return Some(Statement::ReturnStatement(ReturnStatement {
+            expression: value,
+            range: TokenRange { start, end },
+        }));
     }
 
     pub fn parse_let_statement(&mut self) -> Option<Statement> {
